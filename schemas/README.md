@@ -1,80 +1,23 @@
 # Airtable Component Schemas
 
-Zod schemas for Airtable Apps UI Kit components. These are the **single source of truth** for component props, design token values, and usage constraints.
+Structured component and token schemas for `@airtable/blocks`, designed to be wired into AI development tooling — Cursor rules, Claude skills, and LLM context injection.
 
-From one schema file you get:
-- TypeScript types via `z.infer<>`
-- Runtime prop validation
-- LLM-consumable documentation (`.describe()` annotations)
-- Cursor rules and Claude skills that enforce the same constraints at generation time
+The schemas in this folder demonstrate what machine-readable design system documentation looks like in practice: typed prop definitions with usage annotations, token values with semantic names, and constraint validators that encode rules prose documentation can't enforce.
 
 ---
 
-## The problem this solves
+## What's here
 
-Traditional component documentation drifts. A markdown spec gets written, then the component changes, and the docs lag behind. Rules written in prose ("never use more than one primary button per screen") live in a wiki that no tool reads.
-
-Schema-driven documentation makes the spec executable. The constraint lives in one place — the schema — and everything else derives from it.
-
----
-
-## Usage
-
-### 1. TypeScript types (free, via inference)
-
-```typescript
-import { ButtonProps } from './button.schema';
-// No separate interface to maintain — z.infer<> derives it from the schema.
-
-function MyButton(props: ButtonProps) { ... }
-```
-
-### 2. Runtime validation
-
-```typescript
-import { ValidatedButtonProps, ButtonSurfaceConstraints } from './button.schema';
-
-// Validate a single button
-const result = ValidatedButtonProps.safeParse({
-  variant: 'danger',
-  children: 'Cancel', // ← caught: danger + "Cancel" is a usage violation
-});
-
-if (!result.success) {
-  console.error(result.error.issues);
-  // [{ message: 'NEVER: variant="danger" on "Cancel". Use "secondary" for cancel/back/close.' }]
-}
-
-// Validate all buttons on a surface
-const surface = ButtonSurfaceConstraints.safeParse([
-  { variant: 'primary', children: 'Save' },
-  { variant: 'primary', children: 'Publish' }, // ← caught: two primaries
-]);
-```
-
-### 3. Generate documentation from the schema
-
-```typescript
-import { ButtonProps } from './button.schema';
-
-// Walk the schema shape and extract .description from each field
-function extractDocs(schema: z.ZodObject<any>) {
-  return Object.entries(schema.shape).map(([key, field]) => ({
-    prop: key,
-    type: field._def.typeName,
-    description: field.description ?? (field._def.innerType?.description),
-  }));
-}
-
-// Output can be rendered as markdown, JSON for an LLM context window,
-// or fed into a documentation site generator.
-```
+| File | What it contains |
+|---|---|
+| `tokens.ts` | Color, spacing, and interactive state tokens — Figma-authoritative values with semantic names |
+| `button.schema.ts` | Button props, variant token bindings, and usage constraint validators |
 
 ---
 
 ## Wiring into a Cursor rule
 
-Cursor rules are markdown files in `.cursor/rules/` that inject context into every AI generation in your project. The schema's `.describe()` annotations are the right level of detail for this — specific enough to enforce, terse enough to fit in context.
+Cursor rules (`.cursor/rules/*.mdc`) inject component knowledge into every AI generation in your project. The constraint-style annotations in the schemas are the right level of detail — specific enough to enforce, terse enough to fit in context.
 
 **`.cursor/rules/airtable-button.mdc`**
 
@@ -115,31 +58,11 @@ Dark         = #333333   (default/secondary text)
 ```
 ````
 
-To keep the rule in sync with the schema automatically, generate it at build time:
-
-```typescript
-// scripts/generate-cursor-rules.ts
-import { ButtonProps, ButtonVariantTokenMap } from '../schemas/button.schema';
-import { writeFileSync } from 'fs';
-
-function generateButtonRule(): string {
-  const variantDescriptions = Object.entries(ButtonProps.shape)
-    .filter(([key]) => key === 'variant')
-    .map(([_, field]) => field.description)
-    .join('');
-
-  // ... build markdown string from schema descriptions
-  return markdown;
-}
-
-writeFileSync('.cursor/rules/airtable-button.mdc', generateButtonRule());
-```
-
 ---
 
 ## Wiring into a Claude skill
 
-Claude skills (`.claude/skills/`) inject instructions into Claude's context for specific tasks. A component schema skill tells Claude how to generate valid Airtable UI when asked.
+Claude skills inject instructions into Claude's context for specific tasks. A component skill tells Claude how to generate valid Airtable UI before it writes a line.
 
 **`.claude/skills/airtable-ui.md`**
 
@@ -150,15 +73,15 @@ When the user asks you to write Airtable app UI using `@airtable/blocks/ui`:
 
 ## Before generating any Button
 
-1. Check: is there already a `variant="primary"` on this surface? If yes, the new button must be `default` or `secondary`.
-2. Is the action destructive and irreversible? Use `danger`. Is it a cancel/back/close? Use `secondary`, not `danger`.
-3. Does the button have no label text? Add `aria-label` — required, enforced at runtime.
-4. Is the button inside a `<form>`? Use `type="submit"`.
+1. Is there already a `variant="primary"` on this surface? If yes, the new button must be `default` or `secondary`.
+2. Is the action destructive and irreversible? Use `danger`. Is it cancel/back/close? Use `secondary`, not `danger`.
+3. No label text? Add `aria-label` — required, runtime error without it.
+4. Inside a `<form>`? Use `type="submit"`.
 
 ## Token reference (authoritative)
 
 | Token | Value | Use |
-|-------|-------|-----|
+|---|---|---|
 | `Light gray 2` | `#F2F2F2` | default button bg |
 | `blueBright` | `#2D7FF9` | primary button bg |
 | `red` | `#EF3061` | danger button bg |
@@ -172,30 +95,26 @@ When the user asks you to write Airtable app UI using `@airtable/blocks/ui`:
 - `secondary` has no background fill — it is transparent
 ````
 
-### The enforcement loop
+---
+
+## The enforcement loop
 
 ```
-Schema (.describe() + .superRefine())
+Component schemas (typed annotations + constraint validators)
   ↓ generates
 Cursor rule (.mdc) + Claude skill (.md)
   ↓ enforces at
-Generation time (Cursor/Claude) + Runtime (safeParse)
+Generation time (Cursor/Claude) + Code review
   ↓ catches
 Wrong variants · missing aria-label · two primaries · wrong token values
 ```
 
-The same constraints run in four places from one source. A schema change propagates everywhere at build time — the documentation cannot drift because it was never separate from the code.
+---
+
+## On source of truth
+
+The schemas here are hand-authored from `@airtable/blocks` v1.19.0 source and the Airtable Apps UI Kit Figma file. For a library you own, the better architecture is to generate this documentation layer from the existing TypeScript interfaces and token definitions directly — so the docs can't drift from the implementation. The hand-authored approach is appropriate for a third-party library where you're working from the outside in.
 
 ---
 
-## Adding a new component
-
-1. Create `[component].schema.ts` following the Button pattern
-2. Define variants, sizes, and token bindings as Zod enums/literals
-3. Add usage rules as `.superRefine()` validators
-4. Run `generate-cursor-rules.ts` to update `.cursor/rules/`
-5. The TypeScript types, docs, and enforcement rules all update automatically
-
----
-
-*Source: `@airtable/blocks` v1.19.0 + Airtable Apps UI Kit Figma (April 2026)*
+*Sources: `@airtable/blocks` v1.19.0 + Airtable Apps UI Kit Figma (April 2026)*
