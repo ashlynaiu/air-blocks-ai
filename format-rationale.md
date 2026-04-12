@@ -17,7 +17,19 @@ This spec is written for LLMs first, humans second. That changes a few things:
 
 **Accessibility as enforcement, not awareness.** Most component specs include accessibility notes as a trailing section. This spec structures them as rules: when to set `aria-expanded`, what runtime error fires if you omit `aria-label`, which WCAG level the color contrasts pass. The goal is that a model generating from this spec produces accessible output by default, not by accident.
 
-**The markdown spec is a derived artifact, not the source of truth.** The logical next step — and the direction this system should go — is schema-driven documentation, where the component spec is generated *from* code rather than written by hand. Zod is the right tool for this: a `ButtonProps` Zod schema with `.describe()` annotations on each field carries both the type contract and the documentation in one place. Usage rules that currently live in prose (`NEVER use more than one primary per screen`) can be encoded as `.refine()` validators. Design tokens become a typed enum rather than a lookup table. From a single schema file, you can derive: TypeScript types via `z.infer<>`, runtime prop validation, LLM-consumable documentation, and Cursor/Claude rule enforcement. The documentation can't drift from the implementation because they're the same artifact. That's the version of this system worth building.
+---
+
+## Where this goes next
+
+The Button spec is a proof of concept for a format, not a finished system. Making a design system genuinely AI-readable at scale means extending this approach across the full library. A few specific directions worth pursuing:
+
+**Schema-driven documentation.** The markdown spec is hand-authored, which means it can drift from the implementation. The right long-term architecture generates this documentation from code — using the TypeScript interfaces and token definitions already in `@airtable/blocks` as the machine-readable source, with an editorial annotation layer on top that carries usage rules, anti-patterns, and the constraint-style guidance an LLM needs. The documentation can't drift from the implementation if it's compiled from it.
+
+**Token system coverage.** This spec documents the tokens used by Button, but the real leverage is a comprehensive token reference — the full color, spacing, typography, and elevation scales with semantic names, usage rules, and the mapping between Figma token names and SDK names. A model that understands the token system can make correct decisions across every component, not just the ones it's seen documented.
+
+**Accessibility as a first-class layer.** Right now WCAG guidance is embedded in individual component specs. It should be a shared, structured reference — contrast ratios for each token pair, keyboard interaction patterns by component type, ARIA role and attribute requirements by pattern (disclosure, combobox, dialog, etc.). An LLM generating accessible Airtable UI should be able to look up `(danger button, white text)` → `passes AA at 13px+` without that fact being buried in a single component file.
+
+**Pattern documentation.** Individual component specs don't cover composition — when to use a Button vs. a TextButton, how cancel/confirm pairs should be structured, what a loading state looks like when Button itself has no loading prop. Interaction patterns that span multiple components are where LLM output most often breaks down, and they're almost never documented explicitly.
 
 ---
 
