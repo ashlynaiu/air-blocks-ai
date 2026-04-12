@@ -1,0 +1,12 @@
+{
+  "name": "airtable-component-schemas",
+  "version": "0.1.0",
+  "description": "Zod schemas for Airtable Apps UI Kit components — source of truth for types, validation, and LLM-consumable documentation.",
+  "type": "module",
+  "dependencies": {
+    "zod": "^3.23.0"
+  },
+  "devDependencies": {
+    "typescript": "^5.4.0"
+  }
+}
