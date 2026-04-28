@@ -33,4 +33,6 @@ The Button spec is a proof of concept for a format, not a finished system. Makin
 
 ---
 
-This format is the thing I've been building toward at Gusto — documentation that travels with the builder and does enforcement work, not just reference work. Applying it to Airtable's actual system felt like the right way to show the idea rather than describe it.
+This format is a foundation, not a finished system. Making it real at scale means generating the documentation layer from the TypeScript interfaces already in `@airtable/blocks` — so it can't drift — and layering evals on top that validate AI-generated code against the schemas at PR time. It means an MCP server that serves component schemas directly into the tools designers and engineers already use, so the right constraints are present at the moment of generation without any setup. And it means a contribution model where a designer with half an hour can fix a wrong variant without filing a ticket and waiting.
+
+The Button spec is what the format looks like for one component. What it looks like across an entire design system — with testable constraints, live schema serving, and a federated contribution model — is the thing worth building next.

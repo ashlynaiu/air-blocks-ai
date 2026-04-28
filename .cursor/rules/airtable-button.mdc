@@ -1,0 +1,52 @@
+---
+description: Enforce Airtable Button usage rules when writing UI code
+globs: ["**/*.tsx", "**/*.ts"]
+alwaysApply: false
+---
+
+# Airtable Button — Usage Rules
+
+When generating or editing code that uses `Button` from `@airtable/blocks/ui`:
+
+## Variants
+
+- `default` — generic actions, toolbar buttons. Background: `#F2F2F2`, text: `#333333`.
+- `primary` — the single most important action on a screen or modal. Background: `#2D7FF9`, text: white. **NEVER more than one per surface.**
+- `secondary` — cancel/back controls. Background: transparent (NOT gray). Pairs with `primary` in confirm/cancel patterns.
+- `danger` — irreversible destructive actions only (delete, revoke, remove). Background: `#EF3061`, text: white. **NEVER use for cancel, back, or close.**
+
+## Props
+
+- No `loading` prop exists. Disable the button and update the label text instead (`{isSaving ? 'Saving…' : 'Save'}`).
+- `icon` is always left-aligned. There is no `rightIcon` or `iconRight` prop.
+- Icon-only buttons (no `children`) **MUST** have `aria-label`. Omitting it throws a runtime console error.
+- Use `type="submit"` on buttons inside `<form>` elements.
+
+## Sizes
+
+- `small` — dense toolbars, table row actions
+- `default` — most contexts
+- `large` — primary CTAs in onboarding or marketing flows
+
+Responsive size is supported: `size={{ xsmallViewport: 'small', mediumViewport: 'default' }}`
+
+## Tokens (use these, not raw hex)
+
+| Token | Value | Used for |
+|---|---|---|
+| `Light gray 2` | `#F2F2F2` | default button background |
+| `blueBright` | `#2D7FF9` | primary button background |
+| `red` | `#EF3061` | danger button background — NOT `#F82B60` |
+| `Dark` | `#333333` | default + secondary button text |
+| `White` | `#FFFFFF` | primary + danger button text |
+
+## What doesn't exist
+
+- No `loading` prop
+- No `rightIcon` or `iconRight` prop
+- No `xlarge` size (only on TextButton, not Button)
+- `secondary` has no background fill — it is intentionally transparent
+
+## Do not confuse with TextButton
+
+`TextButton` is a different component that renders as `<span>`. Use `Button` for all interactive actions that require keyboard accessibility and a native button element.
