@@ -84,12 +84,10 @@ The specs and schemas here are the documentation layer. Two layers above that ar
 
 **Eval framework.** Schemas define what correct looks like — evals test whether generated code actually matches. A CI-friendly eval that takes a code snippet, extracts component usages, and validates them against the Zod constraint validators would make "AI-generated code drifted from spec" a catchable, reportable failure rather than a code review footnote.
 
-**MCP server.** An MCP that serves component schemas and token values as tools would pull this context directly into Cursor, Claude, and any other MCP-compatible tool — no copy-paste, no file setup, no drift. `get_component_schema("Button")` returns the current spec. `validate_usage({ variant: "primary", ... })` runs the constraint validators. The schemas become live infrastructure instead of static documentation.
+**MCP server.** An MCP that serves component schemas and token values as tools would pull this context directly into over LLM tool like Gumloop or Claude Desktop. 
 
 ---
 
 ## Sources
 
 `@airtable/blocks` v1.19.0 · Airtable Apps UI Kit Figma (pulled April 2026)
-
-Where the SDK and Figma diverge on token values, Figma is treated as design-authoritative.
